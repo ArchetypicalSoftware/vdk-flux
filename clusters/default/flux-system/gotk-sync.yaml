@@ -8,7 +8,7 @@ metadata:
 spec:
   interval: 1m0s
   ref:
-    branch: main
+    branch: initial
   secretRef:
     name: flux-system
   url: ssh://git@github.com/ArchetypicalSoftware/vdk-flux
