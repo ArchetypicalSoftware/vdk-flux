@@ -34,11 +34,12 @@ spec:
   values:
     controller:
       service:
-        type: "NodePort"
-        httpPort:
-          nodePort: 30080
-        httpsPort:
-          nodePort: 30443
+        type: "ClusterIP"
+        hostPort:
+          enabled: true
+          ports:
+            http: 30080
+            https: 30443
       nodeSelector:
         ingress-ready: "true"
       tolerations:
