@@ -34,11 +34,11 @@ spec:
   values:
     defaultBackend:
       enabled: true
-      image:
-        repository: "dvdblk/custom-default-backend" # Change this to our own forked image with css
-        tag: "latest"
-        pullPolicy: "Always"
-      port: 8080
+      # image:
+      #   repository: "dvdblk/custom-default-backend" # Change this to our own forked image with css
+      #   tag: "latest"
+      #   pullPolicy: "Always"
+      # port: 8080
     extraArgs:
       default-ssl-certificate: "vega/dev-tls"
     controller:
