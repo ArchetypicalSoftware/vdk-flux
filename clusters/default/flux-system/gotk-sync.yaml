@@ -11,7 +11,7 @@ spec:
     branch: initial
   secretRef:
     name: flux-system
-  url: ssh://git@github.com/ArchetypicalSoftware/vdk-flux
+  url: ssh://git@github.com/ArchetypicalSoftware/vdk-flux.git
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
