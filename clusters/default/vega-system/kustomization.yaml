@@ -2,7 +2,7 @@ namespace: vega-system
 namePrefix: vega-
 commonLabels:
   operator: vega
-  company: archetypical.software
+  company: archetypical-software
 resources:
 - operator-role.yaml
 - operator-role-binding.yaml
