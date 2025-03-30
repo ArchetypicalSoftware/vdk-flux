@@ -1,0 +1,14 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: vega-system
+  namespace: flux-system
+spec:
+  interval: 10m0s
+  sourceRef:
+    kind: GitRepository
+    name: vdk-flux
+  path: ./modules/cert-manager
+  prune: true
+  wait: true
+  timeout: 5m0s
