@@ -70,5 +70,5 @@ spec:
       - effect: "NoSchedule"
         key: "node-role.kubernetes.io/control-plane"
         operator: "Equal"
-    updateStrategy:
-      type: Recreate
+      updateStrategy:
+        type: Recreate
