@@ -21,7 +21,7 @@ metadata:
   name: ingress-nginx
   namespace: ingress-nginx
 spec:
-  interval: 30m
+  interval: 10m
   chart:
     spec:
       chart: ingress-nginx
@@ -31,6 +31,12 @@ spec:
         name: ingress-nginx
         namespace: ingress-nginx
       interval: 12h
+  install:
+    remediation:
+      retries: -1
+  upgrade:
+    remediation:
+      retries: -1
   values:
     defaultBackend:
       enabled: true
