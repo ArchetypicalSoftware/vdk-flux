@@ -21,7 +21,7 @@ metadata:
   name: ingress-nginx
   namespace: ingress-nginx
 spec:
-  interval: 30m
+  interval: 10m
   chart:
     spec:
       chart: ingress-nginx
@@ -31,7 +31,16 @@ spec:
         name: ingress-nginx
         namespace: ingress-nginx
       interval: 12h
+  install:
+    remediation:
+      retries: -1
+  upgrade:
+    force: true
+    remediation:
+      retries: -1
   values:
+    admissionWebhooks:
+      enabled: false
     defaultBackend:
       enabled: true
       # image:
@@ -61,5 +70,5 @@ spec:
       - effect: "NoSchedule"
         key: "node-role.kubernetes.io/control-plane"
         operator: "Equal"
-    admissionWebhooks:
-      enabled: false
+      updateStrategy:
+        type: Recreate

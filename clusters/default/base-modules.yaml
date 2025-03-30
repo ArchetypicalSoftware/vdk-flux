@@ -1,0 +1,16 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: 1-base-modules
+  namespace: flux-system
+spec:
+  interval: 10m0s
+  sourceRef:
+    kind: GitRepository
+    name: vdk-flux
+  dependsOn:
+    - name: 0-flux
+  path: ./base
+  prune: true
+  wait: true
+  timeout: 5m0s
