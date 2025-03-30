@@ -4,7 +4,7 @@ metadata:
   name: 0-flux
   namespace: flux-system
 spec:
-  interval: 10m0s
+  interval: 20m0s
   sourceRef:
     kind: GitRepository
     name: vdk-flux
