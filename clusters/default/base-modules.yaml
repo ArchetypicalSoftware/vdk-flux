@@ -10,7 +10,7 @@ spec:
     name: vdk-flux
   dependsOn:
     - name: 0-flux
-  path: ./modules/base
+  path: ./base
   prune: true
   wait: true
   timeout: 5m0s
