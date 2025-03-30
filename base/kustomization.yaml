@@ -1,5 +1,0 @@
-resources:
-  - vega-namespace.yaml
-  - ../modules/vega-system-flux.yaml
-  - ../modules/nginx-flux.yaml
-  - ../modules/cert-manager-flux.yaml
