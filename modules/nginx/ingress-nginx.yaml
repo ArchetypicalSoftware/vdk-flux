@@ -39,6 +39,8 @@ spec:
     remediation:
       retries: -1
   values:
+    admissionWebhooks:
+      enabled: false
     defaultBackend:
       enabled: true
       # image:
@@ -68,5 +70,5 @@ spec:
       - effect: "NoSchedule"
         key: "node-role.kubernetes.io/control-plane"
         operator: "Equal"
-    admissionWebhooks:
-      enabled: false
+    updateStrategy:
+      type: Recreate
