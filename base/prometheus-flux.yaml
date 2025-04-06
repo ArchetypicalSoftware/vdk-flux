@@ -8,7 +8,7 @@ spec:
   sourceRef:
     kind: GitRepository
     name: vdk-flux
-  path: ./modules/nginx
+  path: ./modules/prometheus
   prune: true
   wait: true
   timeout: 5m0s
