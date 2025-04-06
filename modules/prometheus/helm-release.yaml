@@ -4,8 +4,6 @@ metadata:
   name: kube-prometheus-stack
   namespace: prometheus
 spec:
-  releaseName: kube-prometheus-stack
-  targetNamespace: prometheus
   interval: 10m
   chart:
     spec:
