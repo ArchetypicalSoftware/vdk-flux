@@ -1,0 +1,81 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: kube-prometheus-stack
+  namespace: flux-system
+spec:
+  targetNamespace: prometheus
+  interval: 10m
+  chart:
+    spec:
+      chart: kube-prometheus-stack
+      version: "*"
+      sourceRef:
+        kind: HelmRepository
+        name: prometheus-community
+        namespace: flux-system
+      interval: 12h
+  install:
+    createNamespace: true
+    remediation:
+      retries: -1
+    crds: CreateReplace
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: -1
+  values:
+    # TODO: migrate this to prometheus operator ?
+    namespaceOverride: prometheus
+    cleanPrometheusOperatorObjectNames: true
+    defaultRules:
+      rules:
+        kubeControllerManager: false
+        kubeProxy: false
+        kubeSchedulerAlerting: false
+        kubeSchedulerRecording: false
+        kubernetesApps: false
+        kubernetesResources: false
+    grafana:
+      enabled: true
+    nodeExporter:
+      enabled: true
+      image:
+        registry: quay.io
+    alertmanager:
+      enabled: true
+    kubeControllerManager:
+      enabled: false
+    kubeEtcd:
+      enabled: false
+    kubeProxy:
+      enabled: false
+    kubeStateMetrics:
+      enabled: true
+    prometheus:
+      prometheusSpec:
+        additionalArgs:
+          - name: storage.tsdb.min-block-duration
+            value: 1h
+          - name: storage.tsdb.max-block-duration
+            value: 1h
+          - name: web.enable-otlp-receiver
+            value: ""
+        enableRemoteWriteReceiver: true
+        podMonitorSelectorNilUsesHelmValues: false
+        serviceMonitorSelectorNilUsesHelmValues: false
+        ruleSelectorNilUsesHelmValues: false
+        probeSelectorNilUsesHelmValues: false
+        serviceMonitorNamespaceSelector: {}
+        serviceMonitorSelector: {}
+        ruleNamespaceSelector: {}
+        ruleSelector: {}
+        probeSelector: {}
+        probeNamespaceSelector: {}
+        resources:
+          requests:
+            memory: 250Mi
+          limits:
+            memory: 1.2Gi
+        retention: 1d
+        retentionSize: 1GiB
