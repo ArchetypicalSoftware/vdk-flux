@@ -59,7 +59,8 @@ spec:
             value: 1h
           - name: storage.tsdb.max-block-duration
             value: 1h
-        # https://github.com/prometheus/prometheus/issues/13206
+          - name: web.enable-otlp-receiver
+            value: ""
         enableRemoteWriteReceiver: true
         podMonitorSelectorNilUsesHelmValues: false
         serviceMonitorSelectorNilUsesHelmValues: false
