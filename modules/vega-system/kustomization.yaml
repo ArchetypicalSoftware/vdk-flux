@@ -1,11 +1,8 @@
 namespace: vega-system
 namePrefix: vega-
-labels:
-- pairs:
-    operator: vega
-    company: archetypical-software
-  includeSelectors: true
- 
+commonLabels:
+  operator: vega
+  company: archetypical.software
 resources:
 - operator-role.yaml
 - operator-role-binding.yaml
@@ -18,7 +15,7 @@ resources:
 images:
 - name: operator
   newName: archetypicalsoftware/vega-manager
-  newTag: 0.0.3
+  newTag: 1.0.7
 configMapGenerator:
 - name: webhook-config
   literals:
