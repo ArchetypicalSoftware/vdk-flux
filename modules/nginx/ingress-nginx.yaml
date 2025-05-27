@@ -54,6 +54,8 @@ spec:
       allowSnippetAnnotations: true
       config:
         annotations-risk-level: Critical
+        enable-annotation-validation: false
+        annotation-value-word-blocklist: {}
       service:
         type: "ClusterIP"
       hostPort:
