@@ -53,7 +53,7 @@ jobs:
         OUTPUT_FILE=$(mktemp)
         
         # Run the flux updater and capture output
-        dotnet flux-updater update --path . > "$OUTPUT_FILE" 2>&1
+        dotnet flux-update update --path . > "$OUTPUT_FILE" 2>&1
         
         # Read the output
         OUTPUT=$(cat "$OUTPUT_FILE")
