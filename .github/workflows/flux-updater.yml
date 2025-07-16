@@ -52,6 +52,7 @@ jobs:
         # Create a temporary file to capture the output
         OUTPUT_FILE=$(mktemp)
         
+        dotnet flux-update init
         # Run the flux updater and capture output
         dotnet flux-update update --path . > "$OUTPUT_FILE" 2>&1
         
