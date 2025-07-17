@@ -54,7 +54,7 @@ jobs:
         
         dotnet tool run flux-update init
         # Run the flux updater and capture output
-        dotnet tool run flux-update update --path . > "$OUTPUT_FILE" 2>&1
+        dotnet tool run flux-update update --path . --apply > "$OUTPUT_FILE" 2>&1
         
         # Read the output
         OUTPUT=$(cat "$OUTPUT_FILE")
@@ -67,9 +67,8 @@ jobs:
           echo "Changes detected"
           echo "has_changes=true" >> $GITHUB_OUTPUT
           
-          # Extract the PR message (assuming it's at the end of the output)
-          # This might need adjustment based on the actual output format
-          PR_MESSAGE=$(echo "$OUTPUT" | tail -n 20)
+          # Extract the PR message starting from "## Flux HelmRelease Update Summary"
+          PR_MESSAGE=$(echo "$OUTPUT" | sed -n '/^## Flux HelmRelease Update Summary/,$p')
           
           # Save the PR message to output (escape newlines for GitHub Actions)
           {
