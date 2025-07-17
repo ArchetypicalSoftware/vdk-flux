@@ -43,6 +43,11 @@ jobs:
     - name: Create update branch
       run: |
         BRANCH_NAME="flux-updater/weekly-update-$(date +%Y%m%d)"
+        # Delete the branch if it exists locally
+        git branch -D "$BRANCH_NAME" 2>/dev/null || true
+        # Delete the branch if it exists on remote
+        git push origin --delete "$BRANCH_NAME" 2>/dev/null || true
+        # Create a fresh branch
         git checkout -b "$BRANCH_NAME"
         echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
     
@@ -111,7 +116,7 @@ jobs:
           GH_PAT: ${{ secrets.GH_PAT }}
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
       run: |
-        git push origin "$BRANCH_NAME"
+        git push --force-with-lease origin "$BRANCH_NAME"
     
     - name: Create Pull Request
       if: steps.flux_update.outputs.has_changes == 'true'
