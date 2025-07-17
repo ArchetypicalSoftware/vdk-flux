@@ -125,6 +125,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
       uses: actions/github-script@v7
       with:
+        github-token: ${{ secrets.GH_PAT }}
         script: |
           const prMessage = `${{ steps.flux_update.outputs.pr_message }}`;
           const fullOutput = `${{ steps.flux_update.outputs.full_output }}`;
