@@ -73,7 +73,7 @@ jobs:
           echo "has_changes=true" >> $GITHUB_OUTPUT
           
           # Extract the PR message starting from "## Flux HelmRelease Update Summary"
-          PR_MESSAGE=$(echo "$OUTPUT" | sed -n '/^## Flux HelmRelease Update Summary/,$p')
+          PR_MESSAGE=$(echo "$OUTPUT" | sed -n '/## Flux HelmRelease Update Summary/,$p')
           
           # Save the PR message to output (escape newlines for GitHub Actions)
           {
