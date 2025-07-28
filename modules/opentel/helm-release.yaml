@@ -1,4 +1,4 @@
-apiVersion: helm.toolkit.fluxcd.io/v2beta1
+﻿apiVersion: helm.toolkit.fluxcd.io/v2beta1
 kind: HelmRelease
 metadata:
   name: opentel-operator
@@ -9,7 +9,7 @@ spec:
   chart:
     spec:
       chart: opentelemetry-operator
-      version: "*"
+      version: "0.92.1"
       sourceRef:
         kind: HelmRepository
         name: opentel
@@ -31,3 +31,4 @@ spec:
         enabled: true
       autoGenerateCert:
         enabled: false
+...
