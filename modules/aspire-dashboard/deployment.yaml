@@ -16,10 +16,12 @@ data:
   DOTNET_DASHBOARD_OTLP_HTTP_ENDPOINT_URL: "http://+:18890"
   ASPIRE_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS: "true"
   Dashboard__Frontend__AuthMode: "Unsecured"
+  Dashboard__Frontend__BrowserToken: ""
   Dashboard__Otlp__AuthMode: "Unsecured"
   Dashboard__TelemetryLimits__MaxLogCount: "50000"
   Dashboard__TelemetryLimits__MaxTraceCount: "50000"
   Dashboard__TelemetryLimits__MaxMetricsCount: "100000"
+  ASPNETCORE_PATHBASE: "/observability"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -113,12 +115,6 @@ spec:
         - path:
             type: PathPrefix
             value: /observability
-      filters:
-        - type: URLRewrite
-          urlRewrite:
-            path:
-              type: ReplacePrefixMatch
-              replacePrefixMatch: /
       backendRefs:
         - name: aspire-dashboard
           port: 80
