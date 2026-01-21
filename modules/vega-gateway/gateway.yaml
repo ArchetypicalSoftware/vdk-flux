@@ -43,11 +43,11 @@ spec:
           from: All
   infrastructure:
     parametersRef:
-      group: kgateway.dev
+      group: gateway.kgateway.dev
       kind: GatewayParameters
       name: vega-gateway-params
 ---
-apiVersion: kgateway.dev/v1alpha1
+apiVersion: gateway.kgateway.dev/v1alpha1
 kind: GatewayParameters
 metadata:
   name: vega-gateway-params
