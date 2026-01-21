@@ -65,16 +65,10 @@ spec:
     service:
       type: NodePort
       ports:
-        - name: https
-          port: 30443
-          targetPort: 30443
+        - port: 30443
           nodePort: 30443
-          protocol: TCP
-        - name: http
-          port: 30080
-          targetPort: 30080
+        - port: 30080
           nodePort: 30080
-          protocol: TCP
     podTemplate:
       extraLabels:
         gateway: vega
