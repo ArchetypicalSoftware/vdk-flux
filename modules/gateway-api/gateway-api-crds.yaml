@@ -27,7 +27,7 @@ spec:
     kind: GitRepository
     name: gateway-api
     namespace: gateway-system
-  path: ./config/crd/standard
+  path: ./config/crd/experimental
   prune: true
   wait: true
   timeout: 5m
