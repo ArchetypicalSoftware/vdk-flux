@@ -55,7 +55,7 @@ VDK Flux provides a complete local development environment with:
 |-----------|---------|---------|
 | [Flux](https://fluxcd.io/) | v2.6.2 | GitOps automation |
 | [Gateway API](https://gateway-api.sigs.k8s.io/) | v1.4.0 | Kubernetes standard for ingress |
-| [KGateway](https://kgateway.dev/) | v2.1.0 | Envoy-based Gateway implementation |
+| [KGateway](https://kgateway.dev/) | v2.0.5 | Envoy-based Gateway implementation |
 | [Aspire Dashboard](https://aspire.dev/) | 9.1 | Unified observability UI |
 | [OpenTelemetry](https://opentelemetry.io/) | v0.102.0 | Telemetry collection |
 | [Prometheus](https://prometheus.io/) | v81.2.0 | Metrics storage |

@@ -169,7 +169,7 @@ The cluster expects a TLS secret named `dev-tls` in the `vega-system` namespace.
 |-----------|---------------|
 | Flux | v2.6.2 |
 | Gateway API | v1.4.0 |
-| KGateway | v2.1.0 |
+| KGateway | v2.0.5 |
 | Cert Manager | v1.19.2 |
 | Prometheus Stack | v81.2.0 |
 | OpenTelemetry Operator | v0.102.0 |
