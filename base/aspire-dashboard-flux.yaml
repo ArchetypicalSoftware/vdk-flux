@@ -1,14 +1,17 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: nginx-flux
+  name: aspire-dashboard-flux
   namespace: flux-system
 spec:
   interval: 10m0s
   sourceRef:
     kind: GitRepository
     name: vdk-flux
-  path: ./modules/nginx
+  dependsOn:
+    - name: opentel-flux
+    - name: vega-gateway-flux
+  path: ./modules/aspire-dashboard
   prune: true
   wait: true
   timeout: 5m0s

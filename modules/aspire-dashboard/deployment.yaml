@@ -1,0 +1,139 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: aspire-dashboard
+  labels:
+    toolkit.fluxcd.io/tenant: vdk-team
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aspire-dashboard-config
+  namespace: aspire-dashboard
+data:
+  ASPNETCORE_URLS: "http://+:18888"
+  DOTNET_DASHBOARD_OTLP_ENDPOINT_URL: "http://+:18889"
+  DOTNET_DASHBOARD_OTLP_HTTP_ENDPOINT_URL: "http://+:18890"
+  ASPIRE_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS: "true"
+  Dashboard__Frontend__AuthMode: "Unsecured"
+  Dashboard__Otlp__AuthMode: "Unsecured"
+  Dashboard__TelemetryLimits__MaxLogCount: "50000"
+  Dashboard__TelemetryLimits__MaxTraceCount: "50000"
+  Dashboard__TelemetryLimits__MaxMetricsCount: "100000"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aspire-dashboard
+  namespace: aspire-dashboard
+  labels:
+    app: aspire-dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aspire-dashboard
+  template:
+    metadata:
+      labels:
+        app: aspire-dashboard
+    spec:
+      containers:
+        - name: aspire-dashboard
+          image: mcr.microsoft.com/dotnet/aspire-dashboard:9.1
+          ports:
+            - name: http
+              containerPort: 18888
+              protocol: TCP
+            - name: otlp-grpc
+              containerPort: 18889
+              protocol: TCP
+            - name: otlp-http
+              containerPort: 18890
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: aspire-dashboard-config
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 18888
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 18888
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aspire-dashboard
+  namespace: aspire-dashboard
+  labels:
+    app: aspire-dashboard
+spec:
+  type: ClusterIP
+  selector:
+    app: aspire-dashboard
+  ports:
+    - name: http
+      port: 80
+      targetPort: 18888
+      protocol: TCP
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 18889
+      protocol: TCP
+    - name: otlp-http
+      port: 4318
+      targetPort: 18890
+      protocol: TCP
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: aspire-dashboard
+  namespace: aspire-dashboard
+spec:
+  parentRefs:
+    - name: vega-gateway
+      namespace: vega-system
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /observability
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: /
+      backendRefs:
+        - name: aspire-dashboard
+          port: 80
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: ReferenceGrant
+metadata:
+  name: allow-vega-gateway
+  namespace: aspire-dashboard
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: vega-system
+  to:
+    - group: ""
+      kind: Service
+      name: aspire-dashboard
