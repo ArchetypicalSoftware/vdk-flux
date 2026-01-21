@@ -70,21 +70,6 @@ spec:
         - effect: NoSchedule
           key: node-role.kubernetes.io/control-plane
           operator: Equal
-    envoyContainer:
-      extraVolumeMounts:
-        - name: hostport-http
-          mountPath: /dev/null-http
-        - name: hostport-https
-          mountPath: /dev/null-https
-    extraVolumes:
-      - name: hostport-http
-        hostPath:
-          path: /dev/null
-          type: CharDevice
-      - name: hostport-https
-        hostPath:
-          path: /dev/null
-          type: CharDevice
 ---
 apiVersion: v1
 kind: Service
