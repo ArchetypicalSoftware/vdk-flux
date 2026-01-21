@@ -192,8 +192,8 @@ data:
                   - endpoint:
                       address:
                         socket_address:
-                          address: gloo-proxy-vega-gateway.vega-system.svc.cluster.local
-                          port_value: 8080
+                          address: vega-gateway.vega-system.svc.cluster.local
+                          port_value: 443
         - name: gateway_https
           connect_timeout: 5s
           type: STRICT_DNS
@@ -205,8 +205,8 @@ data:
                   - endpoint:
                       address:
                         socket_address:
-                          address: gloo-proxy-vega-gateway.vega-system.svc.cluster.local
-                          port_value: 8443
+                          address: vega-gateway.vega-system.svc.cluster.local
+                          port_value: 443
     admin:
       address:
         socket_address:
