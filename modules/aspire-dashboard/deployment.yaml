@@ -21,7 +21,6 @@ data:
   Dashboard__TelemetryLimits__MaxLogCount: "50000"
   Dashboard__TelemetryLimits__MaxTraceCount: "50000"
   Dashboard__TelemetryLimits__MaxMetricsCount: "100000"
-  ASPNETCORE_PATHBASE: "/observability"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -114,10 +113,77 @@ spec:
     - matches:
         - path:
             type: PathPrefix
-            value: /observability
+            value: /structuredlogs
       backendRefs:
         - name: aspire-dashboard
           port: 80
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /traces
+      backendRefs:
+        - name: aspire-dashboard
+          port: 80
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /metrics
+      backendRefs:
+        - name: aspire-dashboard
+          port: 80
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /resources
+      backendRefs:
+        - name: aspire-dashboard
+          port: 80
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /consolelogs
+      backendRefs:
+        - name: aspire-dashboard
+          port: 80
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /_framework
+      backendRefs:
+        - name: aspire-dashboard
+          port: 80
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /_content
+      backendRefs:
+        - name: aspire-dashboard
+          port: 80
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /css
+      backendRefs:
+        - name: aspire-dashboard
+          port: 80
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /js
+      backendRefs:
+        - name: aspire-dashboard
+          port: 80
+    - matches:
+        - path:
+            type: Exact
+            value: /observability
+      filters:
+        - type: RequestRedirect
+          requestRedirect:
+            path:
+              type: ReplaceFullPath
+              replaceFullPath: /structuredlogs
+            statusCode: 302
 ---
 apiVersion: gateway.networking.k8s.io/v1beta1
 kind: ReferenceGrant
