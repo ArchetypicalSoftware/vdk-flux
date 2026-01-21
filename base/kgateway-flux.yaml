@@ -10,7 +10,7 @@ spec:
     name: vdk-flux
   dependsOn:
     - name: gateway-api-flux
-    - name: cert-manager-flux
+    - name: cert-manager
   path: ./modules/kgateway
   prune: true
   wait: true

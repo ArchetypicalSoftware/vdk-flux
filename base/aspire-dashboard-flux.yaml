@@ -9,7 +9,7 @@ spec:
     kind: GitRepository
     name: vdk-flux
   dependsOn:
-    - name: opentel-flux
+    - name: opentel
     - name: vega-gateway-flux
   path: ./modules/aspire-dashboard
   prune: true

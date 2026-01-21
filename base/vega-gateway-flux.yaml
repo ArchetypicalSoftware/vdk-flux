@@ -10,7 +10,7 @@ spec:
     name: vdk-flux
   dependsOn:
     - name: kgateway-flux
-    - name: vega-system-flux
+    - name: vega-system
   path: ./modules/vega-gateway
   prune: true
   wait: true
