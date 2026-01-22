@@ -7,7 +7,17 @@
       "Bash(git push)",
       "Bash(helm show chart:*)",
       "Bash(python3:*)",
-      "Bash(kubectl rollout restart:*)"
+      "Bash(kubectl rollout restart:*)",
+      "Bash(python -m json.tool:*)",
+      "Bash(flux reconcile source git:*)",
+      "Bash(flux reconcile:*)",
+      "Bash(docker inspect:*)",
+      "Bash(wsl cat:*)",
+      "Bash(wsl -e cat:*)",
+      "Bash(wsl bash:*)",
+      "Bash(docker restart:*)",
+      "Bash(docker rm:*)",
+      "Bash(docker run:*)"
     ]
   }
 }
