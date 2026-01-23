@@ -175,6 +175,27 @@ spec:
           port: 80
     - matches:
         - path:
+            type: PathPrefix
+            value: /_blazor
+      backendRefs:
+        - name: aspire-dashboard
+          port: 80
+    - matches:
+        - path:
+            type: Exact
+            value: /Aspire.Dashboard.styles.css
+      backendRefs:
+        - name: aspire-dashboard
+          port: 80
+    - matches:
+        - path:
+            type: Exact
+            value: /favicon.ico
+      backendRefs:
+        - name: aspire-dashboard
+          port: 80
+    - matches:
+        - path:
             type: Exact
             value: /observability
       filters:
