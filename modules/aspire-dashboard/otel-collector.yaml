@@ -1,11 +1,76 @@
+---
+# ClusterRole for OpenTelemetry collectors to access cluster resources
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: otel-collector-cluster-role
+rules:
+  - apiGroups: [""]
+    resources:
+      - nodes
+      - nodes/proxy
+      - nodes/metrics
+      - services
+      - endpoints
+      - pods
+      - events
+      - namespaces
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources:
+      - configmaps
+    verbs: ["get"]
+  - apiGroups: ["discovery.k8s.io"]
+    resources:
+      - endpointslices
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources:
+      - ingresses
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["monitoring.coreos.com"]
+    resources:
+      - servicemonitors
+      - podmonitors
+      - probes
+      - scrapeconfigs
+    verbs: ["get", "list", "watch"]
+  - nonResourceURLs: ["/metrics", "/metrics/cadvisor"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: otel-collector-cluster-role-binding
+subjects:
+  - kind: ServiceAccount
+    name: vdk-collector
+    namespace: opentel
+  - kind: ServiceAccount
+    name: vdk-logs-collector
+    namespace: opentel
+roleRef:
+  kind: ClusterRole
+  name: otel-collector-cluster-role
+  apiGroup: rbac.authorization.k8s.io
+---
+# Deployment collector for OTLP ingestion and metrics scraping
 apiVersion: opentelemetry.io/v1beta1
 kind: OpenTelemetryCollector
 metadata:
   name: vdk-collector
   namespace: opentel
 spec:
-  mode: deployment
+  mode: statefulset
   replicas: 1
+  targetAllocator:
+    enabled: true
+    serviceAccount: vdk-collector
+    prometheusCR:
+      enabled: true
+      serviceMonitorSelector: {}
+      podMonitorSelector: {}
+      scrapeInterval: 30s
   config:
     receivers:
       otlp:
@@ -14,6 +79,30 @@ spec:
             endpoint: 0.0.0.0:4317
           http:
             endpoint: 0.0.0.0:4318
+      prometheus:
+        config:
+          scrape_configs:
+            - job_name: otel-collector
+              scrape_interval: 30s
+              static_configs:
+                - targets: ["localhost:8888"]
+        target_allocator:
+          endpoint: http://vdk-collector-targetallocator:80
+          interval: 30s
+          collector_id: ${POD_NAME}
+      k8s_cluster:
+        collection_interval: 30s
+        node_conditions_to_report:
+          - Ready
+          - MemoryPressure
+          - DiskPressure
+          - PIDPressure
+        allocatable_types_to_report:
+          - cpu
+          - memory
+          - storage
+      k8s_events:
+        namespaces: []
     processors:
       batch:
         timeout: 1s
@@ -22,13 +111,49 @@ spec:
         check_interval: 1s
         limit_mib: 512
         spike_limit_mib: 128
+      k8sattributes:
+        auth_type: serviceAccount
+        passthrough: false
+        extract:
+          metadata:
+            - k8s.namespace.name
+            - k8s.deployment.name
+            - k8s.statefulset.name
+            - k8s.daemonset.name
+            - k8s.cronjob.name
+            - k8s.job.name
+            - k8s.node.name
+            - k8s.pod.name
+            - k8s.pod.uid
+            - k8s.pod.start_time
+          labels:
+            - tag_name: app
+              key: app
+              from: pod
+            - tag_name: app.kubernetes.io/name
+              key: app.kubernetes.io/name
+              from: pod
+        pod_association:
+          - sources:
+              - from: resource_attribute
+                name: k8s.pod.ip
+          - sources:
+              - from: resource_attribute
+                name: k8s.pod.uid
+          - sources:
+              - from: connection
+      resource:
+        attributes:
+          - key: cluster.name
+            value: vdk-cluster
+            action: upsert
     exporters:
       otlp/aspire:
         endpoint: aspire-dashboard.aspire-dashboard.svc.cluster.local:4317
         tls:
           insecure: true
       otlphttp/prometheus:
-        endpoint: http://kube-prometheus-stack-prometheus.prometheus.svc.cluster.local:9090/api/v1/otlp
+        endpoint: http://prometheus-kube-prometheus-prometheus.prometheus.svc.cluster.local:9090/api/v1/otlp
         tls:
           insecure: true
       debug:
@@ -37,17 +162,206 @@ spec:
       pipelines:
         traces:
           receivers: [otlp]
-          processors: [memory_limiter, batch]
+          processors: [memory_limiter, k8sattributes, resource, batch]
           exporters: [otlp/aspire, debug]
         metrics:
-          receivers: [otlp]
-          processors: [memory_limiter, batch]
+          receivers: [otlp, prometheus, k8s_cluster]
+          processors: [memory_limiter, k8sattributes, resource, batch]
           exporters: [otlp/aspire, otlphttp/prometheus, debug]
         logs:
-          receivers: [otlp]
-          processors: [memory_limiter, batch]
+          receivers: [otlp, k8s_events]
+          processors: [memory_limiter, k8sattributes, resource, batch]
           exporters: [otlp/aspire, debug]
+      telemetry:
+        metrics:
+          readers:
+            - pull:
+                exporter:
+                  prometheus:
+                    host: 0.0.0.0
+                    port: 8888
+  env:
+    - name: POD_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.name
+    - name: POD_NAMESPACE
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.namespace
+    - name: NODE_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: spec.nodeName
 ---
+# DaemonSet collector for log collection from all nodes
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: vdk-logs
+  namespace: opentel
+spec:
+  mode: daemonset
+  serviceAccount: vdk-logs-collector
+  volumes:
+    - name: varlogpods
+      hostPath:
+        path: /var/log/pods
+    - name: varlibdockercontainers
+      hostPath:
+        path: /var/lib/docker/containers
+  volumeMounts:
+    - name: varlogpods
+      mountPath: /var/log/pods
+      readOnly: true
+    - name: varlibdockercontainers
+      mountPath: /var/lib/docker/containers
+      readOnly: true
+  config:
+    receivers:
+      filelog:
+        include:
+          - /var/log/pods/*/*/*.log
+        exclude:
+          - /var/log/pods/*/otc-container/*.log
+        start_at: end
+        include_file_path: true
+        include_file_name: false
+        operators:
+          - type: router
+            id: get-format
+            routes:
+              - output: parser-docker
+                expr: 'body matches "^\\{"'
+              - output: parser-crio
+                expr: 'body matches "^[^ Z]+ "'
+              - output: parser-containerd
+                expr: 'body matches "^[^ Z]+Z"'
+          # Parse CRI-O format
+          - type: regex_parser
+            id: parser-crio
+            regex: '^(?P<time>[^ Z]+) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*) ?(?P<log>.*)$'
+            output: extract-metadata-from-filepath
+            timestamp:
+              parse_from: attributes.time
+              layout_type: gotime
+              layout: '2006-01-02T15:04:05.999999999Z07:00'
+          # Parse containerd format
+          - type: regex_parser
+            id: parser-containerd
+            regex: '^(?P<time>[^ ^Z]+Z) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*) ?(?P<log>.*)$'
+            output: extract-metadata-from-filepath
+            timestamp:
+              parse_from: attributes.time
+              layout: '%Y-%m-%dT%H:%M:%S.%LZ'
+          # Parse Docker JSON format
+          - type: json_parser
+            id: parser-docker
+            output: extract-metadata-from-filepath
+            timestamp:
+              parse_from: attributes.time
+              layout: '%Y-%m-%dT%H:%M:%S.%LZ'
+          # Extract metadata from file path
+          - type: regex_parser
+            id: extract-metadata-from-filepath
+            regex: '^.*\/(?P<namespace>[^_]+)_(?P<pod_name>[^_]+)_(?P<uid>[a-f0-9\-]{36})\/(?P<container_name>[^\._]+)\/(?P<restart_count>\d+)\.log$'
+            parse_from: attributes["log.file.path"]
+            cache:
+              size: 128
+          # Rename attributes
+          - type: move
+            from: attributes.log
+            to: body
+          - type: move
+            from: attributes.stream
+            to: attributes["log.iostream"]
+          - type: move
+            from: attributes.container_name
+            to: resource["k8s.container.name"]
+          - type: move
+            from: attributes.namespace
+            to: resource["k8s.namespace.name"]
+          - type: move
+            from: attributes.pod_name
+            to: resource["k8s.pod.name"]
+          - type: move
+            from: attributes.restart_count
+            to: resource["k8s.container.restart_count"]
+          - type: move
+            from: attributes.uid
+            to: resource["k8s.pod.uid"]
+    processors:
+      batch:
+        timeout: 1s
+        send_batch_size: 1024
+      memory_limiter:
+        check_interval: 1s
+        limit_mib: 256
+        spike_limit_mib: 64
+      k8sattributes:
+        auth_type: serviceAccount
+        passthrough: false
+        extract:
+          metadata:
+            - k8s.namespace.name
+            - k8s.deployment.name
+            - k8s.statefulset.name
+            - k8s.daemonset.name
+            - k8s.cronjob.name
+            - k8s.job.name
+            - k8s.node.name
+            - k8s.pod.name
+            - k8s.pod.uid
+          labels:
+            - tag_name: app
+              key: app
+              from: pod
+            - tag_name: app.kubernetes.io/name
+              key: app.kubernetes.io/name
+              from: pod
+        pod_association:
+          - sources:
+              - from: resource_attribute
+                name: k8s.pod.uid
+      resource:
+        attributes:
+          - key: cluster.name
+            value: vdk-cluster
+            action: upsert
+          - key: loki.resource.labels
+            value: k8s.namespace.name, k8s.pod.name, k8s.container.name
+            action: insert
+    exporters:
+      otlp/aspire:
+        endpoint: aspire-dashboard.aspire-dashboard.svc.cluster.local:4317
+        tls:
+          insecure: true
+      debug:
+        verbosity: basic
+    service:
+      pipelines:
+        logs:
+          receivers: [filelog]
+          processors: [memory_limiter, k8sattributes, resource, batch]
+          exporters: [otlp/aspire, debug]
+  env:
+    - name: NODE_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: spec.nodeName
+    - name: POD_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.name
+---
+# ServiceAccount for logs collector DaemonSet
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vdk-logs-collector
+  namespace: opentel
+---
+# Service for accessing the main collector
 apiVersion: v1
 kind: Service
 metadata:
