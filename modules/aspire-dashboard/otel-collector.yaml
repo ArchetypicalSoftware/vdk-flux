@@ -1,4 +1,11 @@
 ---
+# ServiceAccount for main collector (required for Target Allocator)
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vdk-collector
+  namespace: opentel
+---
 # ClusterRole for OpenTelemetry collectors to access cluster resources
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -331,6 +338,18 @@ spec:
           - key: loki.resource.labels
             value: k8s.namespace.name, k8s.pod.name, k8s.container.name
             action: insert
+      transform:
+        log_statements:
+          - context: resource
+            statements:
+              # Set service.name from app label or k8s.deployment.name or k8s.container.name
+              - set(attributes["service.name"], attributes["app"]) where attributes["app"] != nil
+              - set(attributes["service.name"], attributes["app.kubernetes.io/name"]) where attributes["service.name"] == nil and attributes["app.kubernetes.io/name"] != nil
+              - set(attributes["service.name"], attributes["k8s.deployment.name"]) where attributes["service.name"] == nil and attributes["k8s.deployment.name"] != nil
+              - set(attributes["service.name"], attributes["k8s.daemonset.name"]) where attributes["service.name"] == nil and attributes["k8s.daemonset.name"] != nil
+              - set(attributes["service.name"], attributes["k8s.statefulset.name"]) where attributes["service.name"] == nil and attributes["k8s.statefulset.name"] != nil
+              - set(attributes["service.name"], attributes["k8s.container.name"]) where attributes["service.name"] == nil and attributes["k8s.container.name"] != nil
+              - set(attributes["service.name"], Concat([attributes["k8s.namespace.name"], "/", attributes["k8s.pod.name"]], "")) where attributes["service.name"] == nil
     exporters:
       otlp/aspire:
         endpoint: aspire-dashboard.aspire-dashboard.svc.cluster.local:4317
@@ -342,7 +361,7 @@ spec:
       pipelines:
         logs:
           receivers: [filelog]
-          processors: [memory_limiter, k8sattributes, resource, batch]
+          processors: [memory_limiter, k8sattributes, resource, transform, batch]
           exporters: [otlp/aspire, debug]
   env:
     - name: NODE_NAME
