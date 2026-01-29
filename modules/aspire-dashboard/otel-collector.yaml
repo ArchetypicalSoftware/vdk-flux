@@ -27,6 +27,18 @@ rules:
     resources:
       - configmaps
     verbs: ["get"]
+  - apiGroups: ["apps"]
+    resources:
+      - replicasets
+      - deployments
+      - statefulsets
+      - daemonsets
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["batch"]
+    resources:
+      - jobs
+      - cronjobs
+    verbs: ["get", "list", "watch"]
   - apiGroups: ["discovery.k8s.io"]
     resources:
       - endpointslices
@@ -50,9 +62,19 @@ kind: ClusterRoleBinding
 metadata:
   name: otel-collector-cluster-role-binding
 subjects:
+  # Main collector service account (for Target Allocator)
   - kind: ServiceAccount
     name: vdk-collector
     namespace: opentel
+  # Collector pod service account (created by operator with -collector suffix)
+  - kind: ServiceAccount
+    name: vdk-collector-collector
+    namespace: opentel
+  # Target allocator service account
+  - kind: ServiceAccount
+    name: vdk-collector-targetallocator
+    namespace: opentel
+  # Logs DaemonSet collector
   - kind: ServiceAccount
     name: vdk-logs-collector
     namespace: opentel
