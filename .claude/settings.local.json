@@ -17,7 +17,8 @@
       "Bash(wsl bash:*)",
       "Bash(docker restart:*)",
       "Bash(docker rm:*)",
-      "Bash(docker run:*)"
+      "Bash(docker run:*)",
+      "Bash(kubectl delete:*)"
     ]
   }
 }
