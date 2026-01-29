@@ -37,6 +37,12 @@ spec:
         kubernetesResources: false
     grafana:
       enabled: true
+      adminPassword: "vega"
+      adminUser: "vega"
+      grafana.ini:
+        server:
+          root_url: "%(protocol)s://%(domain)s/dashboard"
+          serve_from_sub_path: true
     nodeExporter:
       enabled: true
       image:

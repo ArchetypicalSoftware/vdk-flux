@@ -54,22 +54,44 @@ https://localhost:30443/observability
 
 ## OpenTelemetry Collector
 
-The OTEL Collector acts as a telemetry hub, receiving data from applications and routing it to various backends.
+The OTEL Collector acts as a telemetry hub, receiving data from applications and collecting cluster-wide telemetry.
 
 ### Architecture
 
-```yaml
-Receivers:           Processors:         Exporters:
-┌──────────┐        ┌────────────┐      ┌─────────────────┐
-│ OTLP     │───────►│ Batch      │─────►│ Aspire Dashboard│
-│ (gRPC)   │        │            │      │ (traces, logs,  │
-│ :4317    │        │ Memory     │      │  metrics)       │
-├──────────┤        │ Limiter    │      ├─────────────────┤
-│ OTLP     │        │            │      │ Prometheus      │
-│ (HTTP)   │        │            │      │ (metrics only)  │
-│ :4318    │        └────────────┘      └─────────────────┘
-└──────────┘
+VDK deploys two collectors:
+
+1. **vdk-collector** (StatefulSet): Receives OTLP data and scrapes Prometheus metrics
+2. **vdk-logs** (DaemonSet): Collects container logs from all nodes
+
+```text
+                    ┌─────────────────────────────────────────┐
+                    │           vdk-collector                  │
+Receivers:          │  Processors:         Exporters:          │
+┌──────────┐        │  ┌────────────┐      ┌─────────────────┐│
+│ OTLP     │───────►│  │ Batch      │─────►│ Aspire Dashboard││
+│ :4317    │        │  │ K8s Attrs  │      │ (all telemetry) ││
+├──────────┤        │  │ Resource   │      ├─────────────────┤│
+│ Prometheus│───────►│  └────────────┘      │ Prometheus      ││
+│ (scrape) │        │                       │ (metrics)       ││
+├──────────┤        └─────────────────────────────────────────┘
+│ K8s      │
+│ Cluster  │        ┌─────────────────────────────────────────┐
+│ Events   │        │           vdk-logs (DaemonSet)          │
+└──────────┘        │  ┌────────────┐      ┌─────────────────┐│
+                    │  │ Filelog    │─────►│ Aspire Dashboard││
+                    │  │ (all pods) │      │ (logs)          ││
+                    │  └────────────┘      └─────────────────┘│
+                    └─────────────────────────────────────────┘
 ```
+
+### Cluster-Wide Collection
+
+The collectors automatically gather:
+
+- **Metrics**: All ServiceMonitors and PodMonitors via Target Allocator
+- **Logs**: Container logs from all pods on all nodes
+- **Events**: Kubernetes events cluster-wide
+- **Cluster Metrics**: Node conditions, resource allocations
 
 ### Endpoints
 
@@ -90,25 +112,33 @@ The kube-prometheus-stack provides:
 - **Grafana**: Visualization and dashboards
 - **Alertmanager**: Alert routing (enabled but not configured by default)
 
-### Accessing Prometheus
+### Accessing Grafana
+
+Grafana is available at `/dashboard` on the main gateway:
+
+```
+https://localhost:30443/dashboard
+```
+
+Or via your configured domain:
+
+```
+https://idp.dev-k8s.cloud/dashboard
+```
+
+Default credentials:
+- Username: `vega`
+- Password: `vega`
+
+### Accessing Prometheus (Port Forward)
+
+For direct Prometheus access, use port forwarding:
 
 ```bash
-kubectl port-forward -n prometheus svc/kube-prometheus-stack-prometheus 9090:9090
+kubectl port-forward -n prometheus svc/prometheus-kube-prometheus-prometheus 9090:9090
 ```
 
 Open `http://localhost:9090`
-
-### Accessing Grafana
-
-```bash
-kubectl port-forward -n prometheus svc/kube-prometheus-stack-grafana 3000:80
-```
-
-Open `http://localhost:3000`
-
-Default credentials:
-- Username: `admin`
-- Password: `prom-operator`
 
 ### Pre-installed Dashboards
 
