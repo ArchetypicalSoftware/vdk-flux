@@ -15,7 +15,7 @@ resources:
 images:
 - name: operator
   newName: archetypicalsoftware/vega-manager
-  newTag: 0.0.3
+  newTag: 1.0.0
 configMapGenerator:
 - name: webhook-config
   literals:
